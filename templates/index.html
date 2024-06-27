@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Diary</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+        }
+        button {
+            margin-top: 10px;
+        }
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Emotion Diary</h1>
+    <textarea id="diary-text" placeholder="Write your diary entry here..."></textarea>
+    <br>
+    <button id="analyze-button">Analyze Emotion</button>
+    <div id="result"></div>
+
+    <script>
+        $(document).ready(function() {
+            $('#analyze-button').click(function() {
+                var text = $('#diary-text').val();
+                if (text === '') {
+                    alert('Please enter some text.');
+                    return;
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/analyze_emotion',
+                    data: { text: text },
+                    success: function(response) {
+                        var result = response[0]; // Assuming the response is a list with a single result
+                        $('#result').html(
+                            '<h3>Emotion Analysis Result:</h3>' +
+                            '<p><strong>Label:</strong> ' + result.label + '</p>' +
+                            '<p><strong>Score:</strong> ' + result.score.toFixed(4) + '</p>'
+                        );
+                    },
+                    error: function() {
+                        $('#result').html('<p>An error occurred while analyzing the emotion.</p>');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
