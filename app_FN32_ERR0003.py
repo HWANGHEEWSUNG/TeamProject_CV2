@@ -18,6 +18,9 @@ output_blob = next(iter(net.outputs))
 # 감정 인식 라벨
 emotion_labels = ["neutral", "happy", "sad", "surprise", "anger"]
 
+# OpenCV의 얼굴 탐지기 초기화 (Haar Cascade 사용)
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
 def gen_frames():
     cap = cv2.VideoCapture(0)  # 웹캠으로부터 비디오 캡처 시작
     while True:
@@ -25,21 +28,33 @@ def gen_frames():
         if not success:
             break
         else:
-            # 이미지 전처리
-            n, c, h, w = input_blob.shape
-            image = cv2.resize(frame, (w, h))
-            image = image.transpose((2, 0, 1))  # HWC에서 CHW로 레이아웃 변경
-            image = image.reshape((n, c, h, w))
+            # 얼굴 탐지
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
-            # 감정 인식 추론
-            infer_request = exec_net.create_infer_request()
-            infer_request.infer({input_blob.any_name: image})
-            res = infer_request.get_output_tensor().data
+            # 가장 큰 얼굴 찾기
+            if len(faces) > 0:
+                largest_face = max(faces, key=lambda rect: rect[2] * rect[3])  # 얼굴 크기에 따라 선택
+                (x, y, w, h) = largest_face
 
-            emotion = emotion_labels[np.argmax(res)]
+                # 얼굴 영역 추출 및 전처리
+                face_img = frame[y:y+h, x:x+w]
+                n, c, h, w = input_blob.shape
+                face_img = cv2.resize(face_img, (w, h))
+                face_img = face_img.transpose((2, 0, 1))  # HWC에서 CHW로 레이아웃 변경
+                face_img = face_img.reshape((n, c, h, w))
 
-            # 결과 표시
-            cv2.putText(frame, emotion, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                # 감정 인식 추론
+                infer_request = exec_net.create_infer_request()
+                infer_request.infer({input_blob.any_name: face_img})
+                res = infer_request.get_output_tensor().data
+
+                emotion = emotion_labels[np.argmax(res)]
+
+                # 결과 표시
+                # cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                cv2.putText(frame, emotion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
