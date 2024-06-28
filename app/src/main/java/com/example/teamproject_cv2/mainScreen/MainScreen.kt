@@ -72,4 +72,3 @@ fun MainContent(navController: NavController, paddingValues: PaddingValues) {
         }
     }
 }
-

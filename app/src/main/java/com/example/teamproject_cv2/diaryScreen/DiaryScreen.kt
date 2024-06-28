@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.teamproject_cv2.diaryScreen
 
 import android.app.Activity
