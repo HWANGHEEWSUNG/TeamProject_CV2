@@ -1,8 +1,9 @@
-@file:Suppress("DEPRECATION")
-
 package com.example.teamproject_cv2.diaryScreen
 
+
 import android.app.Activity
+import android.app.DatePickerDialog
+import android.content.Context
 import android.net.Uri
 import android.widget.ImageView
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -23,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,17 +52,21 @@ import com.example.teamproject_cv2.R
 import com.example.teamproject_cv2.uploadDiaryWithImageToFirebase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.StorageReference
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiaryScreen(
-    navController: NavController, storageReference: StorageReference, firestore: FirebaseFirestore
+    navController: NavController,
+    storageReference: StorageReference,
+    firestore: FirebaseFirestore
 ) {
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var diaryText by remember { mutableStateOf("") }
+    val context = LocalContext.current // Get context safely
     val activity = LocalContext.current as Activity
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -68,17 +75,35 @@ fun DiaryScreen(
     var selectedEmojiIndex by remember { mutableStateOf(-1) }
     val emojis = listOf(R.drawable.emoji_happy, R.drawable.emoji_neutral, R.drawable.emoji_sad)
 
+    val selectedDate = remember { mutableStateOf(LocalDate.now()) }
+    val dateFormatter = remember {
+        DateTimeFormatter.ofPattern("M월 d일", Locale.getDefault())
+    }
+
     Scaffold(topBar = {
-        TopAppBar(title = {
-            val today = SimpleDateFormat("M월 d일", Locale.getDefault()).format(Date())
-            Text(today)
-        }, navigationIcon = {
-            IconButton(onClick = {
-                navController.popBackStack()
-            }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        TopAppBar(
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        dateFormatter.format(selectedDate.value),
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    IconButton(onClick = {
+                        // Show date picker dialog
+                        showDatePickerDialog(context, selectedDate)
+                    }) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Select Date")
+                    }
+                }
+            },
+            navigationIcon = {
+                IconButton(onClick = {
+                    navController.popBackStack()
+                }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
             }
-        })
+        )
     }) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -184,4 +209,17 @@ fun DiaryScreen(
             }
         }
     }
+}
+private fun showDatePickerDialog(context: Context, selectedDate: MutableState<LocalDate>) {
+    val calendar = Calendar.getInstance()
+    calendar.set(selectedDate.value.year, selectedDate.value.monthValue - 1, selectedDate.value.dayOfMonth)
+    DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            selectedDate.value = LocalDate.of(year, month + 1, dayOfMonth)
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    ).show()
 }
