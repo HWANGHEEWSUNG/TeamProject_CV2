@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.teamproject_cv2.diaryScreen.DiaryScreen
 import com.example.teamproject_cv2.entryScreen.EntryScreen
+import com.example.teamproject_cv2.loginScreen.ForgotPasswordScreen
 import com.example.teamproject_cv2.loginScreen.LoginScreen
 import com.example.teamproject_cv2.loginScreen.RegisterScreen
 import com.example.teamproject_cv2.mainScreen.MainScreen
@@ -56,6 +57,7 @@ fun AppContent(storageReference: StorageReference, firestore: FirebaseFirestore)
         composable("loginScreen") { LoginScreen(navController) }
         composable("mainScreen") { MainScreen(navController) }
         composable("registerScreen") { RegisterScreen(navController) }
+        composable("forgotPasswordScreen") { ForgotPasswordScreen(navController) }
         composable("diaryScreen") { DiaryScreen(navController, storageReference, firestore) }
     }
 }
