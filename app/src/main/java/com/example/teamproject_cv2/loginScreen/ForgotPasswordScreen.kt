@@ -2,7 +2,6 @@ package com.example.teamproject_cv2.loginScreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,14 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,23 +42,12 @@ fun ForgotPasswordScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFFE8ECF4), RoundedCornerShape(12.dp))
     ) {
-        // "Back" button
-        Box(
-            modifier = Modifier
-                .padding(22.dp)
-                .size(41.dp)
-                .background(Color.White, RoundedCornerShape(12.dp))
-                .border(1.dp, Color(0xFFE8ECF4), RoundedCornerShape(12.dp))
-                .clickable { navController.popBackStack() },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                tint = Color(0xFF1E232C)
-            )
+        // BackButton 컴포저블을 사용하여 뒤로 가기 버튼을 만듭니다.
+        BackButton {
+            navController.popBackStack()
         }
 
         Column(
