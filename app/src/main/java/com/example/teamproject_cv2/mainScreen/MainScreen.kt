@@ -7,20 +7,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import java.time.LocalDate
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,24 +22,33 @@ fun MainScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Main Screen") },
+                title = { Text("메인 화면") },
                 actions = {
                     IconButton(onClick = { navController.navigate("diaryScreen") }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add")
+                        Icon(Icons.Filled.Add, contentDescription = "추가")
                     }
                 }
             )
         },
         content = { paddingValues ->
-            // Main content goes here
             MainContent(navController, paddingValues)
-        }
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate("calendarScreen/${LocalDate.now()}")
+                }
+            ) {
+                Text("달력 열기")
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End
     )
 }
 
 @Composable
 fun MainContent(navController: NavController, paddingValues: PaddingValues) {
-    val items = listOf("Item 1", "Item 2", "Item 3") // 샘플 리스트 아이템
+    val items = listOf("Item 1", "Item 2", "Item 3")
 
     LazyColumn(
         modifier = Modifier
@@ -59,7 +62,6 @@ fun MainContent(navController: NavController, paddingValues: PaddingValues) {
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
                     .clickable {
-                        // 클릭 시 수행할 작업
                         navController.navigate("diaryScreen")
                     },
                 elevation = CardDefaults.cardElevation(4.dp)

@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.teamproject_cv2.calendarScreen.CalendarScreen
 import com.example.teamproject_cv2.diaryScreen.DiaryScreen
 import com.example.teamproject_cv2.entryScreen.EntryScreen
 import com.example.teamproject_cv2.loginScreen.ForgotPasswordScreen
@@ -23,6 +24,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
+import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     private lateinit var analytics: FirebaseAnalytics
@@ -58,7 +60,21 @@ fun AppContent(storageReference: StorageReference, firestore: FirebaseFirestore)
         composable("mainScreen") { MainScreen(navController) }
         composable("registerScreen") { RegisterScreen(navController) }
         composable("forgotPasswordScreen") { ForgotPasswordScreen(navController) }
+        composable("calendarScreen/{selectedDate}") { backStackEntry ->
+            val selectedDate = backStackEntry.arguments?.getString("selectedDate")?.let {
+                LocalDate.parse(it)
+            } ?: LocalDate.now()
+            CalendarScreen(
+                selectedDate = selectedDate,
+                onDateSelected = { date ->
+                    navController.navigate("someOtherScreen/${date}")
+                }
+            )
+        }
         composable("diaryScreen") { DiaryScreen(navController, storageReference, firestore) }
+        composable("someOtherScreen/{selectedDate}") { backStackEntry ->
+            // Handle someOtherScreen content with selectedDate
+        }
     }
 }
 
