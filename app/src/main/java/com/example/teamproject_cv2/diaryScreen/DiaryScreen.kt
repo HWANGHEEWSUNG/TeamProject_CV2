@@ -199,7 +199,8 @@ fun DiaryScreen(
                                 storageReference,
                                 firestore,
                                 activity,
-                                selectedEmojiIndex
+                                selectedEmojiIndex,
+                                selectedDate.value
                             )
                         }) {
                             Text("일기 업로드")
