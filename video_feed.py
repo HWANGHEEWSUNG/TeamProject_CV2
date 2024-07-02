@@ -6,8 +6,9 @@ class EmotionRecognition:
     def __init__(self):
         # 비디오 캡처 초기화
         self.cap = cv2.VideoCapture(0)
+        self.fps = 5  # 노트북 웹캠 플리커링으로 표정 인식 낮아짐; 프레임 낮춤으로 인식률 증가
         # Haar Cascade 초기화
-        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        # 확인 결과, DeepFace.analyze 기본 값이 opencv며 얼굴 인식이 haar cascade를 사용; haar cascade 삭제
 
     def gen_frames(self):
         while True:
@@ -15,25 +16,15 @@ class EmotionRecognition:
             if not success:
                 break
             else:
-                # 얼굴 탐지
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-
-                for (x, y, w, h) in faces:
-                    # 얼굴 영역 추출
-                    face_img = frame[y:y+h, x:x+w]
-
-                    # DeepFace를 사용하여 감정 인식 수행
-                    try:
-                        objs = DeepFace.analyze(face_img, actions=["emotion"])
-                        dominant_emotion = objs[0]["dominant_emotion"]
-                        # 감정 텍스트를 프레임에 표시
-                        cv2.putText(frame, dominant_emotion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2, cv2.LINE_AA)
-                    except Exception as e:
-                        print(f"Error analyzing face: {e}")
-
-                    # 얼굴 영역에 사각형 그리기
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+                # DeepFace를 사용하여 감정 인식 수행
+                try:
+                    objs = DeepFace.analyze(frame, actions=["emotion"], detector_backend="fastmtcnn")  # 기본값인 opencv가 얼굴 인식이 낮은 편이라 fastcnn으로 변경
+                    dominant_emotion = objs[0]["dominant_emotion"]
+                    # 감정 텍스트를 프레임에 표시
+                    cv2.putText(frame, dominant_emotion, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
+                                cv2.LINE_AA)
+                except Exception as e:
+                    print(f"Error analyzing frame: {e}")
 
                 ret, buffer = cv2.imencode('.jpg', frame)
                 frame = buffer.tobytes()
@@ -43,15 +34,9 @@ class EmotionRecognition:
     def get_emotion(self):
         success, frame = self.cap.read()
         if success:
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-            if len(faces) > 0:
-                (x, y, w, h) = faces[0]
-                face_img = frame[y:y+h, x:x+w]
-                try:
-                    objs = DeepFace.analyze(face_img, actions=["emotion"])
-                    return jsonify(objs[0])
-                except Exception as e:
-                    return jsonify({"error": str(e)})
-            return jsonify({"error": "No face detected"})
+            try:
+                objs = DeepFace.analyze(frame, actions=["emotion"], detector_backend="fastmtcnn")
+                return jsonify(objs[0])
+            except Exception as e:
+                return jsonify({"error": str(e)})
         return jsonify({"error": "No frame captured"})
