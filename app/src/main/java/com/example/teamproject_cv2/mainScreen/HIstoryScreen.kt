@@ -56,6 +56,7 @@ fun HistoryScreen(firestore: FirebaseFirestore) {
     }
 }
 
+
 @Composable
 fun DiaryCard(entry: DiaryEntry) {
     Card(
@@ -66,32 +67,40 @@ fun DiaryCard(entry: DiaryEntry) {
             .padding(vertical = 8.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
-            // Image loading with placeholder
-            Image(
-                painter = rememberAsyncImagePainter(
-                    ImageRequest.Builder(LocalContext.current)
-                        .data(data = entry.imageUrl)
-                        .apply(block = fun ImageRequest.Builder.() {
-                            crossfade(true)
-                            placeholder(R.drawable.ic_launcher_foreground)
-                            error(R.drawable.ic_launcher_foreground)
-                        }).build()
-                ),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(64.dp)
-                    .aspectRatio(1f)
-                    .padding(end = 16.dp),
-                contentScale = ContentScale.Crop
-            )
+            if (entry.isPlaceholder) {
+                // 플레이스홀더 카드 UI
+                Text(
+                    text = entry.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            } else {
+                // 실제 일기 데이터 UI
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(data = entry.imageUrl.takeIf { !it.isNullOrBlank() } ?: R.drawable.ic_launcher_foreground)
+                            .apply(block = fun ImageRequest.Builder.() {
+                                crossfade(true)
+                                placeholder(R.drawable.ic_launcher_foreground)
+                                error(R.drawable.ic_launcher_foreground)
+                            }).build()
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .aspectRatio(1f)
+                        .padding(end = 16.dp),
+                    contentScale = ContentScale.Crop
+                )
 
-            // Diary content output
-            Column {
-                Text(text = "Date: ${entry.selectedDate}", style = MaterialTheme.typography.titleMedium)
-                Text(text = "Emotion: ${entry.emotion}", style = MaterialTheme.typography.bodySmall)
-                Text(text = "Score: ${entry.emotionScore}", style = MaterialTheme.typography.bodySmall)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = entry.text, style = MaterialTheme.typography.bodySmall)
+                Column {
+                    Text(text = "Date: ${entry.selectedDate}", style = MaterialTheme.typography.titleMedium)
+                    Text(text = "Emotion: ${entry.emotion}", style = MaterialTheme.typography.bodySmall)
+                    Text(text = "Score: ${entry.emotionScore}", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = entry.text, style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
     }
