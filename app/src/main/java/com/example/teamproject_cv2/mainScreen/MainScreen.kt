@@ -1,6 +1,9 @@
 package com.example.teamproject_cv2.mainScreen
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,6 +17,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -37,14 +41,20 @@ fun MainScreen(navController: NavController) {
             )
         },
         content = { paddingValues ->
-            MainContent(paddingValues)
+            MainContent(navController, paddingValues)
         }
     )
 }
 
 @Composable
-fun MainContent(paddingValues: PaddingValues) {
-    val items = List(10) { "Item ${it + 1}" }  // 10개의 항목을 생성
+fun MainContent(navController: NavController, paddingValues: PaddingValues) {
+    val items = List(10) { index ->
+        if (index == 0) {
+            "히스토리 페이지로 이동"
+        } else {
+            "일기 ${index + 1}"
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -57,13 +67,37 @@ fun MainContent(paddingValues: PaddingValues) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 8.dp)
+                    .clickable {
+                        if (item == "히스토리 페이지로 이동") {
+                            navController.navigate("historyScreen")
+                        }
+                    },
                 elevation = CardDefaults.cardElevation(4.dp)
             ) {
-                Text(
-                    text = item,
+                Column(
                     modifier = Modifier.padding(16.dp)
-                )
+                ) {
+                    Text(
+                        text = item,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    when (item) {
+                        "히스토리 페이지로 이동" -> {
+                            Text(
+                                text = "여기를 클릭하여 지난 10일간의 일기 히스토리를 확인하세요.",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                        else -> {
+                            Text(
+                                text = "이곳에 일기 내용 요약이 들어갑니다.",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
             }
         }
     }

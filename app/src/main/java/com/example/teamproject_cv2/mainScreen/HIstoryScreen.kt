@@ -1,0 +1,86 @@
+package com.example.teamproject_cv2.mainScreen
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+
+@Composable
+fun HistoryScreen(firestore: FirebaseFirestore) {
+    val coroutineScope = rememberCoroutineScope()
+    var diaryEntries by remember { mutableStateOf<List<DiaryEntry>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            diaryEntries = getDiaryEntries(firestore)
+        }
+    }
+
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(diaryEntries) { entry ->
+            DiaryCard(entry)
+        }
+    }
+}
+
+@Composable
+fun DiaryCard(entry: DiaryEntry) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Row(modifier = Modifier.padding(16.dp)) {
+            entry.imageUrl?.let { imageUrl ->
+                Image(
+                    painter = rememberAsyncImagePainter(model = imageUrl),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .aspectRatio(1f)
+                        .padding(end = 16.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            Column {
+                Text(text = "Date: ${entry.selectedDate}", style = MaterialTheme.typography.titleMedium)
+                Text(text = "Emotion: ${entry.emotion}", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Score: ${entry.emotionScore}", style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = entry.text, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}

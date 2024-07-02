@@ -32,6 +32,7 @@ import com.example.teamproject_cv2.graphScreen.GraphScreen
 import com.example.teamproject_cv2.loginScreen.ForgotPasswordScreen
 import com.example.teamproject_cv2.loginScreen.LoginScreen
 import com.example.teamproject_cv2.loginScreen.RegisterScreen
+import com.example.teamproject_cv2.mainScreen.HistoryScreen
 import com.example.teamproject_cv2.mainScreen.MainScreen
 import com.example.teamproject_cv2.profileScreen.ProfileScreen
 import com.google.firebase.FirebaseApp
@@ -96,14 +97,28 @@ fun AppContent(storageReference: StorageReference, firestore: FirebaseFirestore)
                         }
                     )
                 }
-                composable("diaryScreen") { DiaryScreen(navController, storageReference, firestore) }
+                composable("diaryScreen") {
+                    DiaryScreen(
+                        navController,
+                        storageReference,
+                        firestore
+                    )
+                }
+                composable("historyScreen") { HistoryScreen(firestore) }
             }
         }
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
-        if (currentRoute in listOf("mainScreen", "profileScreen", "graphScreen", "calendarScreen/{selectedDate}")) {
+        if (currentRoute in listOf(
+                "mainScreen",
+                "profileScreen",
+                "graphScreen",
+                "calendarScreen/{selectedDate}",
+                "historyScreen"
+            )
+        ) {
             BottomNavigationBar(navController)
         }
     }
