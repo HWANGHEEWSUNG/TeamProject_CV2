@@ -27,8 +27,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import com.example.teamproject_cv2.R
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
@@ -63,17 +66,26 @@ fun DiaryCard(entry: DiaryEntry) {
             .padding(vertical = 8.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
-            entry.imageUrl?.let { imageUrl ->
-                Image(
-                    painter = rememberAsyncImagePainter(model = imageUrl),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .aspectRatio(1f)
-                        .padding(end = 16.dp),
-                    contentScale = ContentScale.Crop
-                )
-            }
+            // Image loading with placeholder
+            Image(
+                painter = rememberAsyncImagePainter(
+                    ImageRequest.Builder(LocalContext.current)
+                        .data(data = entry.imageUrl)
+                        .apply(block = fun ImageRequest.Builder.() {
+                            crossfade(true)
+                            placeholder(R.drawable.ic_launcher_foreground)
+                            error(R.drawable.ic_launcher_foreground)
+                        }).build()
+                ),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(64.dp)
+                    .aspectRatio(1f)
+                    .padding(end = 16.dp),
+                contentScale = ContentScale.Crop
+            )
+
+            // Diary content output
             Column {
                 Text(text = "Date: ${entry.selectedDate}", style = MaterialTheme.typography.titleMedium)
                 Text(text = "Emotion: ${entry.emotion}", style = MaterialTheme.typography.bodySmall)
