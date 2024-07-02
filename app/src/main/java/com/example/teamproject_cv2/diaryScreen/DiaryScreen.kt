@@ -38,6 +38,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +53,7 @@ import com.example.teamproject_cv2.R
 import com.example.teamproject_cv2.uploadDiaryWithImageToFirebase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.StorageReference
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -79,6 +81,7 @@ fun DiaryScreen(
     val dateFormatter = remember {
         DateTimeFormatter.ofPattern("M월 d일", Locale.getDefault())
     }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(topBar = {
         TopAppBar(
@@ -193,18 +196,21 @@ fun DiaryScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Button(onClick = {
-                            uploadDiaryWithImageToFirebase(
-                                selectedImageUri,
-                                diaryText,
-                                storageReference,
-                                firestore,
-                                activity,
-                                selectedEmojiIndex,
-                                selectedDate.value
-                            )
+                            coroutineScope.launch {
+                                uploadDiaryWithImageToFirebase(
+                                    selectedImageUri,
+                                    diaryText,
+                                    storageReference,
+                                    firestore,
+                                    activity,
+                                    selectedEmojiIndex,
+                                    selectedDate.value
+                                )
+                            }
                         }) {
                             Text("일기 업로드")
                         }
+
                     }
                 }
             }
