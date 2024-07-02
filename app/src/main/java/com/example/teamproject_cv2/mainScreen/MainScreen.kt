@@ -12,8 +12,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -23,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,17 +38,7 @@ fun MainScreen(navController: NavController) {
         },
         content = { paddingValues ->
             MainContent(paddingValues)
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navController.navigate("calendarScreen/${LocalDate.now()}")
-                }
-            ) {
-                Text("달력 열기")
-            }
-        },
-        floatingActionButtonPosition = FabPosition.End
+        }
     )
 }
 
