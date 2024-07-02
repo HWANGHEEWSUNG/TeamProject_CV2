@@ -16,6 +16,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.MediaType.Companion.toMediaType
 import org.json.JSONArray
 import org.json.JSONObject
+import java.math.RoundingMode
+import java.text.DecimalFormat
 
 suspend fun uploadDiaryWithImageToFirebase(
     uri: Uri?,
@@ -26,38 +28,33 @@ suspend fun uploadDiaryWithImageToFirebase(
     selectedEmojiIndex: Int,
     selectedDate: LocalDate // 선택한 날짜 매개변수 추가
 ) {
-    try {
-        // 감정 분석을 비동기로 수행하고 결과를 기다립니다
-        val emotion = analyzeEmotion(diaryText)
+    val (emotion, score) = analyzeEmotion(diaryText)
 
-        if (uri != null) {
-            val fileName = UUID.randomUUID().toString()
-            val ref = storageReference.child("images/$fileName")
+    if (uri != null) {
+        val fileName = UUID.randomUUID().toString()
+        val ref = storageReference.child("images/$fileName")
 
-            ref.putFile(uri).addOnSuccessListener { taskSnapshot ->
-                val downloadUrl = taskSnapshot.metadata?.reference?.downloadUrl
-                downloadUrl?.addOnSuccessListener { url ->
-                    saveDiaryToFirestore(
-                        diaryText,
-                        url.toString(),
-                        firestore,
-                        activity,
-                        selectedEmojiIndex,
-                        selectedDate,
-                        emotion
-                    )
-                }
-            }.addOnFailureListener {
-                Toast.makeText(activity, "이미지 업로드 실패: ${it.message}", Toast.LENGTH_LONG).show()
+        ref.putFile(uri).addOnSuccessListener { taskSnapshot ->
+            val downloadUrl = taskSnapshot.metadata?.reference?.downloadUrl
+            downloadUrl?.addOnSuccessListener { url ->
+                saveDiaryToFirestore(
+                    diaryText,
+                    url.toString(),
+                    firestore,
+                    activity,
+                    selectedEmojiIndex,
+                    selectedDate,
+                    emotion,
+                    score
+                )
             }
-        } else {
-            saveDiaryToFirestore(
-                diaryText, null, firestore, activity, selectedEmojiIndex, selectedDate, emotion
-            )
+        }.addOnFailureListener {
+            Toast.makeText(activity, "이미지 업로드 실패: ${it.message}", Toast.LENGTH_LONG).show()
         }
-    } catch (e: Exception) {
-        Log.e("UploadDiary", "Error uploading diary", e)
-        Toast.makeText(activity, "일기 업로드 실패: ${e.message}", Toast.LENGTH_LONG).show()
+    } else {
+        saveDiaryToFirestore(
+            diaryText, null, firestore, activity, selectedEmojiIndex, selectedDate, emotion, score
+        )
     }
 }
 
@@ -68,7 +65,8 @@ fun saveDiaryToFirestore(
     activity: Activity,
     selectedEmojiIndex: Int,
     selectedDate: LocalDate,
-    emotion: String
+    emotion: String,
+    score: Double
 ) {
     val diaryEntry = hashMapOf(
         "text" to diaryText,
@@ -76,7 +74,8 @@ fun saveDiaryToFirestore(
         "timestamp" to System.currentTimeMillis(),
         "selectedEmojiIndex" to selectedEmojiIndex,
         "selectedDate" to selectedDate.toString(),
-        "emotion" to emotion  // Add the analyzed emotion
+        "emotion" to emotion,
+        "emotionScore" to score // 감정 스코어 추가
     )
 
     firestore.collection("diaries").add(diaryEntry).addOnSuccessListener {
@@ -86,7 +85,7 @@ fun saveDiaryToFirestore(
     }
 }
 
-suspend fun analyzeEmotion(text: String): String {
+suspend fun analyzeEmotion(text: String): Pair<String, Double> {
     return withContext(Dispatchers.IO) {
         try {
             val client = OkHttpClient()
@@ -110,18 +109,26 @@ suspend fun analyzeEmotion(text: String): String {
                 val jsonResponse = JSONArray(responseBody)
 
                 if (jsonResponse.length() > 0) {
-                    val label = jsonResponse.getJSONObject(0).getString("label")
-                    return@withContext label
+                    val result = jsonResponse.getJSONObject(0)
+                    val label = result.getString("label")
+                    val score = result.getDouble("score")
+
+                    // 소수점 둘째자리로 반올림
+                    val df = DecimalFormat("#.##")
+                    df.roundingMode = RoundingMode.CEILING
+                    val roundedScore = df.format(score).toDouble()
+
+                    return@withContext Pair(label, roundedScore)
                 } else {
-                    return@withContext "Unknown"
+                    return@withContext Pair("Unknown", 0.0)
                 }
             } else {
                 Log.e("AnalyzeEmotion", "Error response: ${response.code} ${responseBody}")
-                return@withContext "Unknown"
+                return@withContext Pair("Unknown", 0.0)
             }
         } catch (e: Exception) {
             Log.e("AnalyzeEmotion", "Error analyzing emotion", e)
-            return@withContext "Unknown"
+            return@withContext Pair("Unknown", 0.0)
         }
     }
 }
