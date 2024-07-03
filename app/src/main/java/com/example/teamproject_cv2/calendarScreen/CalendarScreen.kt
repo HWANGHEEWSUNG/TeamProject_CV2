@@ -33,6 +33,9 @@ fun CalendarScreen(
     val emotions = remember { mutableStateOf(mutableMapOf<LocalDate, ImageVector>()) }
     val openDialog = remember { mutableStateOf(false) }
     val selectedEmotionDate = remember { mutableStateOf<LocalDate?>(null) }
+    val onDateClick: (LocalDate) -> Unit = { date ->
+        onDateSelected(date)
+    }
 
     val emotionIcons = listOf(
         Icons.Rounded.EmojiEmotions to "Happy",

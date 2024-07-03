@@ -13,16 +13,26 @@ data class DiaryEntry(
     val imageUrl: String? = null,
     val timestamp: Long = 0L,
     val selectedEmojiIndex: Int = 0,
-    val selectedDate: LocalDate = LocalDate.now(), // LocalDate로 변경
+    val selectedDate: LocalDate = LocalDate.now(),
     val emotion: String = "",
     val emotionScore: Double = 0.0,
     val isPlaceholder: Boolean = false,
-    val onClick: (() -> Unit)? = null  // 클릭 핸들러 추가
+    val onClick: (() -> Unit)? = null
+)
+
+data class DiaryEntryFirestore(
+    val text: String = "",
+    val imageUrl: String? = null,
+    val timestamp: Long = 0L,
+    val selectedEmojiIndex: Int = 0,
+    val selectedDate: String = "",  // LocalDate 대신 String
+    val emotion: String = "",
+    val emotionScore: Double = 0.0
 )
 
 suspend fun getDiaryEntries(firestore: FirebaseFirestore): List<DiaryEntry> {
     val today = LocalDate.now()
-    val tenDaysAgo = today.minusDays(9)  // 오늘 포함 10일
+    val tenDaysAgo = today.minusDays(9)
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val displayFormatter = DateTimeFormatter.ofPattern("M월 d일", Locale.KOREAN)
 
@@ -33,7 +43,7 @@ suspend fun getDiaryEntries(firestore: FirebaseFirestore): List<DiaryEntry> {
             .get()
             .await()
 
-        snapshot.documents.mapNotNull { it.toObject(DiaryEntry::class.java) }
+        snapshot.documents.mapNotNull { it.toObject(DiaryEntryFirestore::class.java)?.toDiaryEntry() }
     } catch (e: Exception) {
         emptyList()
     }
@@ -61,4 +71,16 @@ suspend fun getDiaryEntries(firestore: FirebaseFirestore): List<DiaryEntry> {
     }
 
     return allEntries
+}
+
+private fun DiaryEntryFirestore.toDiaryEntry(): DiaryEntry {
+    return DiaryEntry(
+        text = this.text,
+        imageUrl = this.imageUrl,
+        timestamp = this.timestamp,
+        selectedEmojiIndex = this.selectedEmojiIndex,
+        selectedDate = LocalDate.parse(this.selectedDate),  // String을 LocalDate로 변환
+        emotion = this.emotion,
+        emotionScore = this.emotionScore
+    )
 }

@@ -19,12 +19,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.teamproject_cv2.calendarScreen.CalendarScreen
 import com.example.teamproject_cv2.diaryScreen.DiaryScreen
 import com.example.teamproject_cv2.entryScreen.EntryScreen
@@ -86,19 +89,24 @@ fun AppContent(storageReference: StorageReference, firestore: FirebaseFirestore)
                 composable("forgotPasswordScreen") { ForgotPasswordScreen(navController) }
                 composable("profileScreen") { ProfileScreen(navController) }
                 composable("graphScreen") { GraphScreen(navController) }
-                composable("calendarScreen/{selectedDate}") { backStackEntry ->
+                composable("calendarScreen/{selectedDate}", arguments = listOf(
+                    navArgument("selectedDate") { type = NavType.StringType }
+                )) { backStackEntry ->
                     val selectedDate = backStackEntry.arguments?.getString("selectedDate")?.let {
                         LocalDate.parse(it)
                     } ?: LocalDate.now()
                     CalendarScreen(
                         selectedDate = selectedDate,
                         onDateSelected = { date ->
-                            navController.navigate("diaryScreen/${date}")
+                            // 네비게이션 요청 시에 uniqueId를 추가하여 충돌을 방지할 수 있음
+                            navController.navigate("diaryScreen/${date}?from=calendar")
                         }
                     )
                 }
-                composable("diaryScreen/{date}") { backStackEntry ->
-                    val date = backStackEntry.arguments?.getString("date") ?: LocalDate.now().toString()
+                composable("diaryScreen/{date}", arguments = listOf(
+                    navArgument("date") { type = NavType.StringType }
+                )) { backStackEntry ->
+                    val date = backStackEntry.arguments?.getString("date") ?: ""
                     DiaryScreen(
                         navController = navController,
                         storageReference = storageReference,
