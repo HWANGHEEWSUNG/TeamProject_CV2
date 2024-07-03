@@ -16,10 +16,11 @@ data class DiaryEntry(
     val selectedDate: String = "",
     val emotion: String = "",
     val emotionScore: Double = 0.0,
-    val isPlaceholder: Boolean = false
+    val isPlaceholder: Boolean = false,
+    val onClick: (() -> Unit)? = null  // Add this line
 )
 
-suspend fun getDiaryEntries(firestore: FirebaseFirestore): List<DiaryEntry> {
+suspend fun getDiaryEntries(firestore: FirebaseFirestore, onPlaceholderClick: (String) -> Unit): List<DiaryEntry> {
     val today = LocalDate.now()
     val tenDaysAgo = today.minusDays(9)  // 오늘 포함 10일
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -51,7 +52,8 @@ suspend fun getDiaryEntries(firestore: FirebaseFirestore): List<DiaryEntry> {
             allEntries.add(DiaryEntry(
                 text = "$displayDate 일기를 작성해주세요!",
                 selectedDate = formattedDate,
-                isPlaceholder = true
+                isPlaceholder = true,
+                onClick = { onPlaceholderClick(formattedDate) }  // 클릭 핸들러 설정
             ))
         }
 
@@ -60,4 +62,3 @@ suspend fun getDiaryEntries(firestore: FirebaseFirestore): List<DiaryEntry> {
 
     return allEntries
 }
-

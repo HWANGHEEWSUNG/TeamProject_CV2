@@ -97,14 +97,18 @@ fun AppContent(storageReference: StorageReference, firestore: FirebaseFirestore)
                         }
                     )
                 }
-                composable("diaryScreen") {
+                composable("diaryScreen/{date}") { backStackEntry ->
+                    val date = backStackEntry.arguments?.getString("date") ?: ""
                     DiaryScreen(
                         navController,
                         storageReference,
-                        firestore
+                        firestore,
+                        date
                     )
                 }
-                composable("historyScreen") { HistoryScreen(firestore) }
+                composable("historyScreen") {
+                    HistoryScreen(navController, firestore)
+                }
             }
         }
 
@@ -130,7 +134,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavItem("Main", "mainScreen"),
         BottomNavItem("Calendar", "calendarScreen/${LocalDate.now()}"),
         BottomNavItem("Graph", "graphScreen"),
-        BottomNavItem("Profile", "profileScreen")
+        BottomNavItem("Profile", "profileScreen"),
     )
 
     NavigationBar {

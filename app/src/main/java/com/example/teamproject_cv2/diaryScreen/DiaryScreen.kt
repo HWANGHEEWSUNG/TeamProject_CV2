@@ -65,7 +65,8 @@ import java.util.Locale
 fun DiaryScreen(
     navController: NavController,
     storageReference: StorageReference,
-    firestore: FirebaseFirestore
+    firestore: FirebaseFirestore,
+    date: String
 ) {
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var diaryText by remember { mutableStateOf("") }

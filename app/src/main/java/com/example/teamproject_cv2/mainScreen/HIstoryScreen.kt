@@ -1,6 +1,7 @@
 package com.example.teamproject_cv2.mainScreen
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.teamproject_cv2.R
@@ -36,13 +38,15 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 @Composable
-fun HistoryScreen(firestore: FirebaseFirestore) {
+fun HistoryScreen(navController: NavController, firestore: FirebaseFirestore) {
     val coroutineScope = rememberCoroutineScope()
     var diaryEntries by remember { mutableStateOf<List<DiaryEntry>>(emptyList()) }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
-            diaryEntries = getDiaryEntries(firestore)
+            diaryEntries = getDiaryEntries(firestore) { date ->
+                navController.navigate("diaryScreen/$date")
+            }
         }
     }
 
@@ -56,7 +60,6 @@ fun HistoryScreen(firestore: FirebaseFirestore) {
     }
 }
 
-
 @Composable
 fun DiaryCard(entry: DiaryEntry) {
     Card(
@@ -65,6 +68,7 @@ fun DiaryCard(entry: DiaryEntry) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
+            .clickable { entry.onClick?.invoke() }  // 클릭 이벤트 처리
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
             if (entry.isPlaceholder) {
@@ -80,11 +84,11 @@ fun DiaryCard(entry: DiaryEntry) {
                     painter = rememberAsyncImagePainter(
                         ImageRequest.Builder(LocalContext.current)
                             .data(data = entry.imageUrl.takeIf { !it.isNullOrBlank() } ?: R.drawable.ic_launcher_foreground)
-                            .apply(block = fun ImageRequest.Builder.() {
+                            .apply {
                                 crossfade(true)
                                 placeholder(R.drawable.ic_launcher_foreground)
                                 error(R.drawable.ic_launcher_foreground)
-                            }).build()
+                            }.build()
                     ),
                     contentDescription = null,
                     modifier = Modifier
