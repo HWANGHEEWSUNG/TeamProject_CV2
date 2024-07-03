@@ -4,7 +4,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
-import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -13,14 +13,14 @@ data class DiaryEntry(
     val imageUrl: String? = null,
     val timestamp: Long = 0L,
     val selectedEmojiIndex: Int = 0,
-    val selectedDate: String = "",
+    val selectedDate: LocalDate = LocalDate.now(), // LocalDate로 변경
     val emotion: String = "",
     val emotionScore: Double = 0.0,
     val isPlaceholder: Boolean = false,
-    val onClick: (() -> Unit)? = null  // Add this line
+    val onClick: (() -> Unit)? = null  // 클릭 핸들러 추가
 )
 
-suspend fun getDiaryEntries(firestore: FirebaseFirestore, onPlaceholderClick: (String) -> Unit): List<DiaryEntry> {
+suspend fun getDiaryEntries(firestore: FirebaseFirestore): List<DiaryEntry> {
     val today = LocalDate.now()
     val tenDaysAgo = today.minusDays(9)  // 오늘 포함 10일
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -28,7 +28,7 @@ suspend fun getDiaryEntries(firestore: FirebaseFirestore, onPlaceholderClick: (S
 
     val existingEntries = try {
         val snapshot = firestore.collection("diaries")
-            .whereGreaterThanOrEqualTo("timestamp", tenDaysAgo.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
+            .whereGreaterThanOrEqualTo("timestamp", tenDaysAgo.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli())
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .await()
@@ -41,19 +41,19 @@ suspend fun getDiaryEntries(firestore: FirebaseFirestore, onPlaceholderClick: (S
     val allEntries = mutableListOf<DiaryEntry>()
     var currentDate = today
 
-    while (currentDate >= tenDaysAgo) {
+    while (currentDate.isAfter(tenDaysAgo) || currentDate.isEqual(tenDaysAgo)) {
         val formattedDate = currentDate.format(dateFormatter)
-        val displayDate = currentDate.format(displayFormatter)
-        val existingEntry = existingEntries.find { it.selectedDate == formattedDate }
+        val displayDate = displayFormatter.format(currentDate)
+        val existingEntry = existingEntries.find { it.selectedDate == currentDate }
 
         if (existingEntry != null) {
             allEntries.add(existingEntry)
         } else {
             allEntries.add(DiaryEntry(
                 text = "$displayDate 일기를 작성해주세요!",
-                selectedDate = formattedDate,
+                selectedDate = currentDate,
                 isPlaceholder = true,
-                onClick = { onPlaceholderClick(formattedDate) }  // 클릭 핸들러 설정
+                onClick = { /* 클릭 시 처리할 작업 설정 */ }
             ))
         }
 

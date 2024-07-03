@@ -66,20 +66,20 @@ fun DiaryScreen(
     navController: NavController,
     storageReference: StorageReference,
     firestore: FirebaseFirestore,
-    date: String
+    date: String // String 형식으로 날짜를 받음
 ) {
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var diaryText by remember { mutableStateOf("") }
-    val context = LocalContext.current // Get context safely
+    val context = LocalContext.current
     val activity = LocalContext.current as Activity
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            selectedImageUri = uri
-        }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        selectedImageUri = uri
+    }
     var selectedEmojiIndex by remember { mutableIntStateOf(-1) }
     val emojis = listOf(R.drawable.emoji_happy, R.drawable.emoji_neutral, R.drawable.emoji_sad)
 
-    val selectedDate = remember { mutableStateOf(LocalDate.now()) }
+    // 전달받은 date 파라미터를 LocalDate로 변환하여 사용
+    val selectedDate = remember { mutableStateOf(LocalDate.parse(date)) }
     val dateFormatter = remember {
         DateTimeFormatter.ofPattern("M월 d일", Locale.getDefault())
     }
@@ -118,7 +118,6 @@ fun DiaryScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
-
                 // 1번 박스: 이모지 선택
                 Box(
                     modifier = Modifier

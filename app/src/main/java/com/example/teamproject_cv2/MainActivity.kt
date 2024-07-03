@@ -93,22 +93,20 @@ fun AppContent(storageReference: StorageReference, firestore: FirebaseFirestore)
                     CalendarScreen(
                         selectedDate = selectedDate,
                         onDateSelected = { date ->
-                            navController.navigate("someOtherScreen/${date}")
+                            navController.navigate("diaryScreen/${date}")
                         }
                     )
                 }
                 composable("diaryScreen/{date}") { backStackEntry ->
-                    val date = backStackEntry.arguments?.getString("date") ?: ""
+                    val date = backStackEntry.arguments?.getString("date") ?: LocalDate.now().toString()
                     DiaryScreen(
-                        navController,
-                        storageReference,
-                        firestore,
-                        date
+                        navController = navController,
+                        storageReference = storageReference,
+                        firestore = firestore,
+                        date = date
                     )
                 }
-                composable("historyScreen") {
-                    HistoryScreen(navController, firestore)
-                }
+                composable("historyScreen") { HistoryScreen(firestore, navController) }
             }
         }
 

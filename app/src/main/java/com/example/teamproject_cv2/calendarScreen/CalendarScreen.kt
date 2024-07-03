@@ -55,7 +55,6 @@ fun CalendarScreen(
                                 .clickable {
                                     emotions.value[selectedEmotionDate.value!!] = icon
                                     openDialog.value = false
-                                    onDateSelected(selectedEmotionDate.value!!)
                                 }
                                 .padding(8.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -67,11 +66,17 @@ fun CalendarScreen(
                     }
                 }
             },
-            confirmButton = {}
+            confirmButton = {
+                TextButton(onClick = { openDialog.value = false }) {
+                    Text("Confirm")
+                }
+            }
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
