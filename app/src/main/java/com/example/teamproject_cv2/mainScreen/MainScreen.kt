@@ -22,43 +22,59 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavController) {
+
+    val newsArticles = remember { mutableStateOf<List<NewsItem>>(emptyList()) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val response = RetrofitInstance.api.getNews(
+                    clientId = "vo5x1zPAjvdidvQPIKMQ",
+                    clientSecret = "_mFqgHd_EO",
+                    query = "정신건강",
+                    display = 9
+                )
+                newsArticles.value = response.items
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("메인 화면") },
                 actions = {
-                    IconButton(onClick = {
-                        val currentDate = LocalDate.now().toString()
-                        navController.navigate("diaryScreen/$currentDate")
-                    }) {
+                    IconButton(onClick = { navController.navigate("diaryScreen") }) {
                         Icon(Icons.Filled.Add, contentDescription = "추가")
                     }
                 }
             )
         },
         content = { paddingValues ->
-            MainContent(navController, paddingValues)
+            MainContent(navController, paddingValues, newsArticles.value)
         }
     )
 }
 
 @Composable
-fun MainContent(navController: NavController, paddingValues: PaddingValues) {
-    val items = List(10) { index ->
-        if (index == 0) {
-            "히스토리 페이지로 이동"
-        } else {
-            "일기 ${index + 1}"
-        }
-    }
+fun MainContent(navController: NavController, paddingValues: PaddingValues, newsItems: List<NewsItem>) {
+    val items = listOf("히스토리 페이지로 이동") + newsItems.map { it.title }
 
     LazyColumn(
         modifier = Modifier
@@ -67,13 +83,16 @@ fun MainContent(navController: NavController, paddingValues: PaddingValues) {
         contentPadding = PaddingValues(16.dp)
     ) {
         items(items) { item ->
+            val isHistory = item == "히스토리 페이지로 이동"
+            val newsItem = newsItems.firstOrNull { it.title == item }
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
                     .padding(vertical = 8.dp)
                     .clickable {
-                        if (item == "히스토리 페이지로 이동") {
+                        if (isHistory) {
                             navController.navigate("historyScreen")
                         }
                     },
@@ -87,19 +106,16 @@ fun MainContent(navController: NavController, paddingValues: PaddingValues) {
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    when (item) {
-                        "히스토리 페이지로 이동" -> {
-                            Text(
-                                text = "여기를 클릭하여 지난 10일간의 일기 히스토리를 확인하세요.",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                        else -> {
-                            Text(
-                                text = "이곳에 일기 내용 요약이 들어갑니다.",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
+                    if (isHistory) {
+                        Text(
+                            text = "여기를 클릭하여 지난 10일간의 일기 히스토리를 확인하세요.",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    } else {
+                        Text(
+                            text = newsItem?.description ?: "뉴스 설명을 불러올 수 없습니다.",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
             }
