@@ -3,23 +3,26 @@ package com.example.teamproject_cv2
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.GMobiledata
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -136,13 +139,15 @@ fun AppContent(storageReference: StorageReference, firestore: FirebaseFirestore)
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
-        BottomNavItem("Main", "mainScreen"),
-        BottomNavItem("Calendar", "calendarScreen/${LocalDate.now()}"),
-        BottomNavItem("Graph", "graphScreen"),
-        BottomNavItem("Profile", "profileScreen"),
+        BottomNavItem("메인", "mainScreen"),
+        BottomNavItem("캘린더", "calendarScreen/${LocalDate.now()}"),
+        BottomNavItem("그래프", "graphScreen"),
+        BottomNavItem("프로필", "profileScreen"),
     )
 
-    NavigationBar {
+    NavigationBar(
+        modifier = Modifier.background(Color(0x211C40)) // 배경색 설정
+    ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
@@ -160,15 +165,25 @@ fun BottomNavigationBar(navController: NavHostController) {
                     }
                 },
                 icon = {
-                    when (item.route) {
+                    val icon = when (item.route) {
                         "mainScreen" -> Icons.Filled.Home
                         "calendarScreen/${LocalDate.now()}" -> Icons.Filled.Event
-                        "graphScreen" -> Icons.Filled.GMobiledata
+                        "graphScreen" -> Icons.Filled.ShowChart // GMobiledata 아이콘 대신 ShowChart 사용
                         "profileScreen" -> Icons.Filled.Person
                         else -> null
-                    }?.let { Icon(it, contentDescription = null) }
+                    }
+                    if (icon != null) {
+                        Icon(icon, contentDescription = item.title)
+                    }
                 },
-                label = { Text(item.title) }
+                label = { Text(item.title) },
+                alwaysShowLabel = false, // 라벨을 항상 표시하지 않도록 설정
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color(0x5927EB), // 선택된 아이콘 색상
+                    unselectedIconColor = Color.Gray, // 선택되지 않은 아이콘 색상
+                    selectedTextColor = Color(0x5927EB), // 선택된 텍스트 색상
+                    unselectedTextColor = Color.Gray // 선택되지 않은 텍스트 색상
+                )
             )
         }
     }
