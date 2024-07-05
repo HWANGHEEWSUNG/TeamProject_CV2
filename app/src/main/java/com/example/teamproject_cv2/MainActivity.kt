@@ -146,7 +146,7 @@ fun BottomNavigationBar(navController: NavHostController) {
     )
 
     NavigationBar(
-        modifier = Modifier.background(Color(0x211C40)) // 배경색 설정
+        modifier = Modifier.background(Color(0xFF211C40)) // 배경색 설정
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -179,9 +179,9 @@ fun BottomNavigationBar(navController: NavHostController) {
                 label = { Text(item.title) },
                 alwaysShowLabel = false, // 라벨을 항상 표시하지 않도록 설정
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color(0x5927EB), // 선택된 아이콘 색상
+                    selectedIconColor = Color(0xFF5927EB), // 선택된 아이콘 색상
                     unselectedIconColor = Color.Gray, // 선택되지 않은 아이콘 색상
-                    selectedTextColor = Color(0x5927EB), // 선택된 텍스트 색상
+                    selectedTextColor = Color(0xFF5927EB), // 선택된 텍스트 색상
                     unselectedTextColor = Color.Gray // 선택되지 않은 텍스트 색상
                 )
             )
