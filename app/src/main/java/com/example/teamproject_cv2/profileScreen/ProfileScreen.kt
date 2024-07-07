@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,9 +19,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,10 +40,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
+import com.example.teamproject_cv2.R
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import java.util.UUID
@@ -71,7 +76,7 @@ fun ProfileScreen(navController: NavController) {
             .fillMaxSize()
             .background(Color(0xFF1B0A40))
             .padding(16.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopStart
     ) {
         // 배경
         Box(
@@ -103,31 +108,54 @@ fun ProfileScreen(navController: NavController) {
         )
 
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()  // 전체 높이를 채워서 중앙 정렬이 가능하도록 함
         ) {
-            // 선택된 이미지를 표시하거나 이미지를 선택할 수 있는 옵션을 제공
-            if (selectedImageUri != null) {
-                Image(
-                    painter = rememberImagePainter(selectedImageUri),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(128.dp)
-                        .clip(shape = MaterialTheme.shapes.medium)
-                        .clickable { imagePickerLauncher.launch("image/*") },
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(128.dp)
-                        .clip(shape = MaterialTheme.shapes.medium)
-                        .background(Color.Gray)
-                        .clickable { imagePickerLauncher.launch("image/*") },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "사진 추가", fontSize = 16.sp, color = Color.White)
+            Text(
+                text = "Setup your account",
+                modifier = Modifier
+                    .padding(start = 30.dp, top = 30.dp)
+                    .wrapContentWidth(Alignment.Start),
+                fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+                lineHeight = 33.sp,
+                color = Color(0xFFEAE2FC)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+            ) {
+                // 선택된 이미지를 표시하거나 이미지를 선택할 수 있는 옵션을 제공
+                if (selectedImageUri != null) {
+                    Image(
+                        painter = rememberImagePainter(selectedImageUri),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(shape = MaterialTheme.shapes.medium)
+                            .clickable { imagePickerLauncher.launch("image/*") },
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.profile),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(shape = MaterialTheme.shapes.medium)
+                            .clickable { imagePickerLauncher.launch("image/*") },
+                        contentScale = ContentScale.Crop
+                    )
                 }
             }
 
@@ -212,4 +240,4 @@ fun ProfileScreen(navController: NavController) {
             }
         }
     }
-}
+    }
