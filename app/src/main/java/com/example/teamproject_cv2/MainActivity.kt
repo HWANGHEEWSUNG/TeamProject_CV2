@@ -159,6 +159,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                         // 백 스택 관리 설정
                         popUpTo(navController.graph.startDestinationId) {
                             saveState = true
+                            inclusive = item.route == "mainScreen" // 메인 스크린일 경우 현재 스택을 모두 제거
                         }
                         launchSingleTop = true
                         restoreState = true
