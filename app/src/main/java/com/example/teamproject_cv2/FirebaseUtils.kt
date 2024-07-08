@@ -28,7 +28,7 @@ suspend fun uploadDiaryWithImageToFirebase(
     selectedEmojiIndex: Int,
     selectedDate: LocalDate // 선택한 날짜 매개변수 추가
 ) {
-    val (emotion, score) = analyzeEmotion(diaryText)
+    val emotions = analyzeEmotion(diaryText)
 
     if (uri != null) {
         val fileName = UUID.randomUUID().toString()
@@ -44,8 +44,7 @@ suspend fun uploadDiaryWithImageToFirebase(
                     activity,
                     selectedEmojiIndex,
                     selectedDate,
-                    emotion,
-                    score
+                    emotions
                 )
             }
         }.addOnFailureListener {
@@ -53,7 +52,7 @@ suspend fun uploadDiaryWithImageToFirebase(
         }
     } else {
         saveDiaryToFirestore(
-            diaryText, null, firestore, activity, selectedEmojiIndex, selectedDate, emotion, score
+            diaryText, null, firestore, activity, selectedEmojiIndex, selectedDate, emotions
         )
     }
 }
@@ -65,17 +64,17 @@ fun saveDiaryToFirestore(
     activity: Activity,
     selectedEmojiIndex: Int,
     selectedDate: LocalDate,
-    emotion: String,
-    score: Double
+    emotions: List<Pair<String, Double>>
 ) {
+    val emotionMap = emotions.associate { it.first to it.second }
+
     val diaryEntry = hashMapOf(
         "text" to diaryText,
         "imageUrl" to imageUrl,
         "timestamp" to System.currentTimeMillis(),
         "selectedEmojiIndex" to selectedEmojiIndex,
         "selectedDate" to selectedDate.toString(),
-        "emotion" to emotion,
-        "emotionScore" to score // 감정 스코어 추가
+        "emotions" to emotionMap // 감정과 그 점수들을 저장
     )
 
     firestore.collection("diaries").add(diaryEntry).addOnSuccessListener {
@@ -85,7 +84,8 @@ fun saveDiaryToFirestore(
     }
 }
 
-suspend fun analyzeEmotion(text: String): Pair<String, Double> {
+
+suspend fun analyzeEmotion(text: String): List<Pair<String, Double>> {
     return withContext(Dispatchers.IO) {
         try {
             val client = OkHttpClient()
@@ -106,10 +106,12 @@ suspend fun analyzeEmotion(text: String): Pair<String, Double> {
             val responseBody = response.body?.string()
 
             if (response.isSuccessful && responseBody != null) {
-                val jsonResponse = JSONArray(responseBody)
+                val jsonResponse = JSONObject(responseBody)
+                val resultsArray = jsonResponse.getJSONArray("results")
 
-                if (jsonResponse.length() > 0) {
-                    val result = jsonResponse.getJSONObject(0)
+                val emotions = mutableListOf<Pair<String, Double>>()
+                for (i in 0 until resultsArray.length()) {
+                    val result = resultsArray.getJSONObject(i)
                     val label = result.getString("label")
                     val score = result.getDouble("score")
 
@@ -118,17 +120,17 @@ suspend fun analyzeEmotion(text: String): Pair<String, Double> {
                     df.roundingMode = RoundingMode.CEILING
                     val roundedScore = df.format(score).toDouble()
 
-                    return@withContext Pair(label, roundedScore)
-                } else {
-                    return@withContext Pair("Unknown", 0.0)
+                    emotions.add(Pair(label, roundedScore))
                 }
+
+                return@withContext emotions
             } else {
                 Log.e("AnalyzeEmotion", "Error response: ${response.code} ${responseBody}")
-                return@withContext Pair("Unknown", 0.0)
+                return@withContext emptyList<Pair<String, Double>>()
             }
         } catch (e: Exception) {
             Log.e("AnalyzeEmotion", "Error analyzing emotion", e)
-            return@withContext Pair("Unknown", 0.0)
+            return@withContext emptyList<Pair<String, Double>>()
         }
     }
 }

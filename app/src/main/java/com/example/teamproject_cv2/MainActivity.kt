@@ -90,7 +90,7 @@ fun AppContent(storageReference: StorageReference, firestore: FirebaseFirestore)
                 composable("registerScreen") { RegisterScreen(navController) }
                 composable("forgotPasswordScreen") { ForgotPasswordScreen(navController) }
                 composable("profileScreen") { ProfileScreen(navController) }
-                composable("graphScreen") { GraphScreen(navController) }
+                composable("graphScreen") { GraphScreen(navController, firestore) }  // 수정
                 composable("calendarScreen/{selectedDate}", arguments = listOf(
                     navArgument("selectedDate") { type = NavType.StringType }
                 )) { backStackEntry ->
