@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,7 +68,8 @@ fun MainScreen(navController: NavController) {
             TopAppBar(
                 title = { Text("메인 화면", color = Color.White) },
                 actions = {
-                    IconButton(onClick = { navController.navigate("diaryScreen") }) {
+                    val currentDate = LocalDate.now().toString()
+                    IconButton(onClick = { navController.navigate("diaryScreen/$currentDate") }) {
                         Icon(Icons.Filled.Add, contentDescription = "추가", tint = Color.White)
                     }
                 },
