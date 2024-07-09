@@ -22,20 +22,25 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -44,10 +49,25 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import com.example.teamproject_cv2.R
+import com.example.teamproject_cv2.graphScreen.BarChartCompose
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.utils.Utils
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
+val emotionColors = mapOf(
+    "anger" to Color.Red,
+    "disgust" to Color.Green,
+    "fear" to Color.Blue,
+    "joy" to Color.Yellow,
+    "neutral" to Color.Cyan,
+    "sadness" to Color.Magenta,
+    "surprise" to Color.LightGray
+)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavController) {
@@ -87,7 +107,6 @@ fun MainScreen(navController: NavController) {
             }
         }
     }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -156,9 +175,11 @@ fun MainScreen(navController: NavController) {
     )
 }
 
+
+
 @Composable
 fun MainContent(navController: NavController, newsItems: List<NewsItem>) {
-    val items = listOf("히스토리 페이지로 이동") + newsItems.map { it.title }
+    val items = listOf("히스토리 페이지로 이동", "감정 그래프 보기") + newsItems.map { it.title }
 
     LazyColumn(
         modifier = Modifier
@@ -167,26 +188,102 @@ fun MainContent(navController: NavController, newsItems: List<NewsItem>) {
     ) {
         items(items) { item ->
             val isHistory = item == "히스토리 페이지로 이동"
+            val isGraph = item == "감정 그래프 보기"
             val newsItem = newsItems.firstOrNull { it.title == item }
 
-            CustomCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .padding(vertical = 8.dp)
-                    .clickable {
-                        if (isHistory) {
-                            navController.navigate("historyScreen")
-                        }
+            if (isGraph) {
+                CustomCardWithChart(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .padding(vertical = 8.dp),
+                    navController = navController
+                )
+            } else {
+                CustomCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(vertical = 8.dp)
+                        .clickable {
+                            if (isHistory) {
+                                navController.navigate("historyScreen")
+                            }
+                        },
+                    title = item,
+                    description = if (isHistory) {
+                        "여기를 클릭하여 지난 10일간의 일기 히스토리를 확인하세요."
+                    } else {
+                        newsItem?.description ?: "뉴스 설명을 불러올 수 없습니다."
                     },
-                title = item,
-                description = if (isHistory) {
-                    "여기를 클릭하여 지난 10일간의 일기 히스토리를 확인하세요."
-                } else {
-                    newsItem?.description ?: "뉴스 설명을 불러올 수 없습니다."
-                },
-                isHistory = isHistory
+                    isHistory = isHistory
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CustomCardWithChart(
+    modifier: Modifier = Modifier,
+    navController: NavController
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var diaryEntries by remember { mutableStateOf<List<DiaryEntry>>(emptyList()) }
+    var barChartData by remember { mutableStateOf<BarData?>(null) }
+    var labels by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        Utils.init(context)  // MPAndroidChart Utils 초기화
+        coroutineScope.launch {
+            diaryEntries = getDiaryEntries(FirebaseFirestore.getInstance()).reversed()
+            val entries = diaryEntries.mapIndexed { index, entry ->
+                val dominantEmotion = entry.dominantEmotion
+                BarEntry(index.toFloat(), dominantEmotion.second.toFloat())
+            }
+            val colors = diaryEntries.map { entry ->
+                emotionColors[entry.dominantEmotion.first]?.toArgb() ?: android.graphics.Color.GRAY
+            }
+            val dataSet = BarDataSet(entries, "Dominant Emotion Scores").apply {
+                this.colors = colors
+                valueTextColor = android.graphics.Color.BLACK
+                valueTextSize = 16f
+            }
+            barChartData = BarData(dataSet)
+            labels = diaryEntries.map { entry ->
+                LocalDate.parse(entry.selectedDate).format(DateTimeFormatter.ofPattern("M/d"))
+            }
+        }
+    }
+
+    Card(
+        modifier = modifier.clickable { navController.navigate("graphScreen") },
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFF69B4) // 파스텔 핑크 색상
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "감정 그래프",
+                style = TextStyle(
+                    color = Color(0xFFECF3FF),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    lineHeight = 22.sp
+                )
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            if (barChartData != null && labels.isNotEmpty()) {
+                BarChartCompose(barChartData!!, labels) { _, _ -> }
+            } else {
+                Text(text = "Loading chart data...", style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
 }
