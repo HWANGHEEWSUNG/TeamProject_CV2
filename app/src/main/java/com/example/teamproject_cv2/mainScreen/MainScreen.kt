@@ -1,5 +1,6 @@
 package com.example.teamproject_cv2.mainScreen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -9,8 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -29,20 +32,42 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.rememberImagePainter
+import com.example.teamproject_cv2.R
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavController) {
+    val firestore = FirebaseFirestore.getInstance()
+    val profileImageUrl = remember { mutableStateOf<String?>(null) }
+    val userName = remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        firestore.collection("users").document("profile")
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null) {
+                    profileImageUrl.value = document.getString("photoUrl")
+                    userName.value = document.getString("username") // 이름 가져오기
+                }
+            }
+            .addOnFailureListener { e ->
+                // Handle error
+            }
+    }
 
     val newsArticles = remember { mutableStateOf<List<NewsItem>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -66,23 +91,63 @@ fun MainScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("메인 화면", color = Color.White) },
-                actions = {
-                    val currentDate = LocalDate.now().toString()
-                    IconButton(onClick = { navController.navigate("diaryScreen/$currentDate") }) {
-                        Icon(Icons.Filled.Add, contentDescription = "추가", tint = Color.White)
-                    }
+                title = {
+                    Text(
+                        text = "Welcome back ${userName.value ?: ""}", // 이름 표시
+                        color = Color.White
+                    )
                 },
                 colors = TopAppBarDefaults.smallTopAppBarColors(
                     containerColor = Color(0xFF1B0A40)
-                )
+                ),
+                actions = {
+                    // + 버튼 추가
+                    IconButton(onClick = { navController.navigate("diaryScreen/${LocalDate.now()}") }) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add",
+                            tint = Color.White
+                        )
+                    }
+                    // 프로필 버튼
+                    Box(
+                        modifier = Modifier
+                            .size(55.dp)
+                            .clip(CircleShape)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0x261A3AED), // rgba(100, 42, 235, 0.15)
+                                        Color(0x26C43DE9) // rgba(196, 61, 233, 0.15)
+                                    ),
+                                    start = Offset(0f, 0f),
+                                    end = Offset(0f, 1f)
+                                )
+                            )
+                            .clickable {
+                                navController.navigate("profileScreen")
+                            }
+                    ) {
+                        profileImageUrl.value?.let { imageUrl ->
+                            Image(
+                                painter = rememberImagePainter(data = imageUrl),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } ?: Image(
+                            painter = painterResource(id = R.drawable.profile),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
             )
         },
         content = { paddingValues ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF1B0A40)) // 배경색 설정
+                    .background(Color(0xFF1B0A40))
                     .padding(paddingValues)
             ) {
                 MainContent(navController, newsArticles.value)

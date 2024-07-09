@@ -58,12 +58,10 @@ fun ProfileScreen(navController: NavController) {
     val storage = FirebaseStorage.getInstance().reference
     val context = LocalContext.current
 
-    // 사용자 입력과 이미지 URI를 위한 상태 변수
     var username by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var isUploading by remember { mutableStateOf(false) }
 
-    // 이미지 선택기를 위한 런처
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri ->
@@ -78,15 +76,13 @@ fun ProfileScreen(navController: NavController) {
             .padding(16.dp),
         contentAlignment = Alignment.TopStart
     ) {
-        // 배경
+        // 배경과 디자인 요소들
         Box(
             modifier = Modifier
                 .size(643.28.dp, 973.34.dp)
                 .offset((-85).dp, (-69).dp)
                 .background(Color(0xFF1B0A40))
         )
-
-        // Ellipse 5
         Box(
             modifier = Modifier
                 .size(407.dp, 390.dp)
@@ -95,8 +91,6 @@ fun ProfileScreen(navController: NavController) {
                 .blur(130.dp)
                 .alpha(0.8f)
         )
-
-        // Ellipse 6
         Box(
             modifier = Modifier
                 .size(388.47.dp, 528.dp)
@@ -112,7 +106,7 @@ fun ProfileScreen(navController: NavController) {
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight()  // 전체 높이를 채워서 중앙 정렬이 가능하도록 함
+                .fillMaxHeight()
         ) {
             Text(
                 text = "Setup your account",
@@ -133,7 +127,6 @@ fun ProfileScreen(navController: NavController) {
                     .fillMaxWidth()
                     .height(180.dp)
             ) {
-                // 선택된 이미지를 표시하거나 이미지를 선택할 수 있는 옵션을 제공
                 if (selectedImageUri != null) {
                     Image(
                         painter = rememberImagePainter(selectedImageUri),
@@ -161,7 +154,6 @@ fun ProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 사용자 입력을 위한 텍스트 필드
             TextField(
                 value = username,
                 onValueChange = { username = it },
@@ -187,11 +179,9 @@ fun ProfileScreen(navController: NavController) {
                     .clickable {
                         isUploading = true
                         selectedImageUri?.let { uri ->
-                            // 이미지 파일 이름 생성
                             val imageName = "${UUID.randomUUID()}.jpg"
                             val imageRef = storage.child("profiles/$imageName")
 
-                            // 이미지 Firebase Storage에 업로드
                             val uploadTask = imageRef.putFile(uri)
                             uploadTask.continueWithTask { task ->
                                 if (!task.isSuccessful) {
@@ -200,21 +190,18 @@ fun ProfileScreen(navController: NavController) {
                                 imageRef.downloadUrl
                             }.addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
-                                    // 업로드된 이미지의 다운로드 URL 얻기
                                     val downloadUri = task.result
-
-                                    // 사용자 객체 생성
                                     val user = hashMapOf(
                                         "username" to username,
                                         "photoUrl" to downloadUri.toString()
                                     )
 
-                                    // Firestore에 사용자 객체 저장
                                     firestore.collection("users")
-                                        .add(user)
+                                        .document("profile") // 문서 ID를 고정하여 사용자의 프로필을 업데이트
+                                        .set(user)
                                         .addOnSuccessListener {
                                             Toast.makeText(context, "프로필 저장 성공", Toast.LENGTH_SHORT).show()
-                                            navController.popBackStack() // 성공 후 뒤로 가기
+                                            navController.popBackStack()
                                         }
                                         .addOnFailureListener {
                                             Toast.makeText(context, "프로필 저장 실패: ${it.message}", Toast.LENGTH_SHORT).show()
@@ -240,4 +227,4 @@ fun ProfileScreen(navController: NavController) {
             }
         }
     }
-    }
+}
